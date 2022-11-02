@@ -1,50 +1,66 @@
-import React, { useState } from "react"
-import ReactDOM from "react-dom"
-import '../css/registration.css'
 
-function App() {
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        const username = document.getElementById('username').value
-        const password = document.getElementById('password').value
+import { QueryClient, QueryClientProvider, useQuery } from 'react-query'
+import '../css/registration.css';
+import { useForm } from "react-hook-form";
 
-        const result = await fetch("https://tkahoot.herokuapp.com/user/register", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                username,
-                password
-            })
-        }).then((res) => res.json())
-
-        if (result.status === 'ok') {
-            alert('Success')
-        } else {
-            console.log(result.error)
+function Register() {
+    const { register, handleSubmit } = useForm({
+        defaultValues: {
+            username: '',
+            password: '',
         }
-    };
-    return (
-        <div className="container">
-            <img src={require('./img/imageLogo.jpg')} className='logo'></img>
-            <div class="form-container">
-                <div className="title">
-                    <h2>Registration</h2>
-                </div>
-                <form id="form-registration" onSubmit={handleSubmit} method="POST">
-                    <label for="username">Tài khoản</label>
-                    <input id="username" type="text" name="username" autocomplete="on" required />
-                    <label for="password">Mật khẩu</label>
-                    <input id="password" type="password" name="password" required />
-
-                    <button id="btn-login" type="submit"  >Xác nhận</button>
-                </form>
-            </div>
+      });
+      return (
+        <div className='container'>
+        <form className="form-container"  onSubmit={handleSubmit(Query(register.username,register.password))}>
+            <h2>Registration</h2>
+          <input {...register("username", { required: true })} placeholder="username" />
+    
+          <input {...register("password", { minLength: 2 })} placeholder="password" />
+          <input type="submit" />     
+        </form>
         </div>
-
-    );
+      );
 }
 
 
-export default App;
+ 
+ const queryClient = new QueryClient()
+ 
+function Query(username,password) {
+   return (
+     <QueryClientProvider client={queryClient}>
+       <RegisterApi />
+     </QueryClientProvider>
+   )
+ }
+ 
+ function RegisterApi(username,password) {
+   const { isLoading, error, data } = useQuery('repoData', () =>
+     fetch('https://tkahoot.herokuapp.com/user/register' , {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            username,
+            password
+        })
+    }).then(res =>
+       res.json()
+     )
+   )
+ 
+   if (isLoading) return 'Loading...'
+ 
+   if (error) return 'An error has occurred: ' + error.message
+ 
+   return (
+    <h1>Hello Kahoot {data}</h1>
+   )
+ }
+
+
+export default Register
+
+
